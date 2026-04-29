@@ -21,5 +21,29 @@
  *    - { error: { message: err.message || 'Internal server error' } }
  */
 export function errorHandler(err, req, res, next) {
-  // Your code here
+  let status = err.status || 500;
+  let message = err.message || "Internal server error";
+
+  if (err.code === "LIMIT_FILE_SIZE") {
+    status = 400;
+    message = "File size exceeds 5MB limit";
+  }
+
+  if (err.message.includes("Invalid file type")) {
+    status = 400;
+    message = err.message;
+  }
+
+  if (err.name === "ValidationError") {
+    status = 400;
+    let errorMessages = Object.values(err.errors).map((e) => e.message);
+    message = errorMessages.join("\n");
+  }
+
+  if (err.code === 11000) {
+    status = 409;
+    message = "Resource already exists";
+  }
+
+  return res.status(status).json({ error: { message } });
 }
